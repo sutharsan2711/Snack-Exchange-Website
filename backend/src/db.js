@@ -11,8 +11,11 @@ const poolConfig = process.env.DATABASE_URL
   ? {
       uri: process.env.DATABASE_URL,
       waitForConnections: true,
-      connectionLimit: 10,
+      connectionLimit: 5,
       queueLimit: 0,
+      connectTimeout: 10000,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 0,
       ssl: isSslRequired ? { minVersion: 'TLSv1.2', rejectUnauthorized: true } : undefined,
     }
   : {
@@ -22,8 +25,11 @@ const poolConfig = process.env.DATABASE_URL
       password: process.env.DB_PASSWORD || 'sutharsan',
       database: process.env.DB_NAME || 'foodie_db',
       waitForConnections: true,
-      connectionLimit: 10,
+      connectionLimit: 5,
       queueLimit: 0,
+      connectTimeout: 10000,
+      enableKeepAlive: true,
+      keepAliveInitialDelay: 0,
       ssl: isSslRequired ? { minVersion: 'TLSv1.2', rejectUnauthorized: true } : undefined,
     };
 

@@ -83,18 +83,15 @@ app.use('/restaurants', restaurantsRouter);
 app.use('/orders', ordersRouter);
 app.use('/upload', uploadRouter);
 
-// Lazy DB initialization for serverless environments (Vercel)
-let dbInitialized = false;
-app.use(async (req, res, next) => {
-  if (!dbInitialized) {
-    try {
-      await initDB();
-      dbInitialized = true;
-    } catch (err) {
-      console.warn('DB initialization check:', err.message);
-    }
-  }
-  next();
+// 404 handler for undefined routes
+app.use((req, res) => {
+  res.status(404).json({ error: 'Not Found', path: req.originalUrl });
+});
+
+// Global error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled server error:', err);
+  res.status(500).json({ error: 'Internal Server Error', message: err?.message || 'Unknown error' });
 });
 
 // Start standalone HTTP server if not running in a serverless environment
@@ -114,4 +111,5 @@ if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
 }
 
 export default app;
+
 
