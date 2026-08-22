@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
+import os from 'os';
 import dotenv from 'dotenv';
 import { initDB } from './db.js';
 
@@ -26,7 +28,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static uploaded files
-const uploadDir = path.resolve('uploads');
+const uploadDir = process.env.VERCEL ? path.join(os.tmpdir(), 'uploads') : path.resolve('uploads');
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (e) {
+  // Ignored in serverless
+}
 app.use('/uploads', express.static(uploadDir));
 app.use('/api/uploads', express.static(uploadDir));
 
