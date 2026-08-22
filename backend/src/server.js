@@ -35,6 +35,36 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'UP', timestamp: new Date().toISOString() });
 });
 
+// Root welcome status endpoint
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ONLINE',
+    service: 'Snack Exchange Express API',
+    database: dbInitialized ? 'Connected' : 'Ready',
+    endpoints: {
+      categories: '/api/categories',
+      foods: '/api/foods',
+      restaurants: '/api/restaurants',
+      orders: '/api/orders',
+      health: '/api/health',
+    },
+  });
+});
+
+app.get('/api', (req, res) => {
+  res.json({
+    status: 'ONLINE',
+    service: 'Snack Exchange Express API',
+    endpoints: {
+      categories: '/api/categories',
+      foods: '/api/foods',
+      restaurants: '/api/restaurants',
+      orders: '/api/orders',
+      health: '/api/health',
+    },
+  });
+});
+
 // Mount routes at /api context path
 const apiRouter = express.Router();
 apiRouter.use('/auth', authRouter);
