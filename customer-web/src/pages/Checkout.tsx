@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCartStore } from '../store/cartStore';
+import { useAuthStore } from '../store/authStore';
 import { apiService } from '../services/api';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import { MapPin, ShoppingBag, CreditCard, CheckCircle2, ArrowLeft, Plus, Check } from 'lucide-react';
+import { MapPin, ShoppingBag, CreditCard, CheckCircle2, ArrowLeft, ArrowRight, Plus, Check, Smartphone, Banknote, ShieldCheck, QrCode, Building2 } from 'lucide-react';
 
 interface Address {
   id: string;
@@ -13,7 +14,15 @@ interface Address {
 
 export const Checkout: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
   const { items, subtotal, deliveryFee, tax, total, clearCart, restaurantName, restaurantId } = useCartStore();
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login?redirect=/checkout');
+    }
+  }, [isAuthenticated, navigate]);
 
   const [placingOrder, setPlacingOrder] = useState(false);
   const [successOrderId, setSuccessOrderId] = useState<string | null>(null);
@@ -21,13 +30,22 @@ export const Checkout: React.FC = () => {
 
   // Address State
   const [addresses, setAddresses] = useState<Address[]>([
-    { id: '1', type: 'Home', detail: '123 Main Street, Sector 4, New Delhi' },
-    { id: '2', type: 'Office', detail: '456 Tech Park, Block C, Bangalore' },
+    { id: '1', type: 'Home', detail: 'Shop No. 8, Meena Food Court, Saravanampatti, Coimbatore' },
+    { id: '2', type: 'Office', detail: 'CHIL SEZ IT Park, Saravanampatti, Coimbatore' },
   ]);
   const [selectedAddressId, setSelectedAddressId] = useState('1');
   const [showAddAddressModal, setShowAddAddressModal] = useState(false);
   const [newAddressType, setNewAddressType] = useState('Other');
   const [newAddressDetail, setNewAddressDetail] = useState('');
+
+  // Payment Method States
+  const [paymentMode, setPaymentMode] = useState<'ONLINE' | 'COD'>('ONLINE');
+  const [onlineSubMethod, setOnlineSubMethod] = useState<'UPI' | 'CARD' | 'NETBANKING'>('UPI');
+  const [upiId, setUpiId] = useState('');
+  const [selectedBank, setSelectedBank] = useState('HDFC Bank');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
 
   if (items.length === 0 && !successOrderId) {
     return (
@@ -63,12 +81,23 @@ export const Checkout: React.FC = () => {
   };
 
   const handlePlaceOrder = async () => {
-    const selectedAddress = addresses.find((a) => a.id === selectedAddressId)?.detail || '123 Main Street, Sector 4, New Delhi';
+    const selectedAddress = addresses.find((a) => a.id === selectedAddressId)?.detail || 'Saravanampatti, Coimbatore';
     const restId = restaurantId || items[0]?.food?.restaurantId || 'gourmet-bistro';
-    const restName = restaurantName || 'The Gourmet Bistro';
+    const restName = restaurantName || 'Snack Exchange';
 
     setPlacingOrder(true);
     setOrderError(null);
+
+    let finalPaymentMethod = 'Cash on Delivery';
+    if (paymentMode === 'ONLINE') {
+      if (onlineSubMethod === 'UPI') {
+        finalPaymentMethod = upiId.trim() ? `Online Payment (UPI: ${upiId.trim()})` : 'Online Payment (UPI / GPay / PhonePe)';
+      } else if (onlineSubMethod === 'CARD') {
+        finalPaymentMethod = cardNumber ? `Online Payment (Card ending in ${cardNumber.slice(-4)})` : 'Online Payment (Credit/Debit Card)';
+      } else {
+        finalPaymentMethod = `Online Payment (${selectedBank})`;
+      }
+    }
 
     try {
       const orderData = {
@@ -83,11 +112,11 @@ export const Checkout: React.FC = () => {
         deliveryFee,
         tax,
         total,
-        paymentMethod: 'Cash on Delivery',
+        paymentMethod: finalPaymentMethod,
       };
-      
+
       const response = await apiService.placeOrder(orderData);
-      
+
       if (response.success) {
         setSuccessOrderId(response.orderId);
         clearCart(); // Clear the Zustand cart state upon successful order placement
@@ -102,7 +131,7 @@ export const Checkout: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-8 min-h-screen">
-      
+
       {/* Back button */}
       <div>
         <Link
@@ -126,7 +155,7 @@ export const Checkout: React.FC = () => {
           <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-500 mx-auto border-2 border-emerald-100 shadow-xs">
             <CheckCircle2 className="w-12 h-12" />
           </div>
-          
+
           <div className="space-y-2">
             <h2 className="text-2xl font-black text-slate-800">Order Placed Successfully!</h2>
             <p className="text-sm text-slate-500 font-medium">
@@ -149,20 +178,29 @@ export const Checkout: React.FC = () => {
             </div>
           </div>
 
-          <button
-            onClick={() => navigate('/')}
-            className="w-full py-3 bg-primary hover:bg-primary-hover text-white rounded-xl font-extrabold text-sm uppercase tracking-wider transition-colors cursor-pointer shadow-md hover:shadow"
-          >
-            Track Order / Continue Shopping
-          </button>
+          <div className="space-y-2.5">
+            <button
+              onClick={() => navigate('/orders')}
+              className="w-full py-3.5 bg-primary hover:bg-primary-hover text-white rounded-xl font-extrabold text-sm uppercase tracking-wider transition-all cursor-pointer shadow-md hover:shadow flex items-center justify-center space-x-2"
+            >
+              <span>View & Track Order Live</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-colors cursor-pointer"
+            >
+              <span>Continue Shopping</span>
+            </button>
+          </div>
         </div>
       ) : (
         /* Checkout flow */
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          
+
           {/* Left Columns: Address & Payment */}
           <div className="lg:col-span-8 space-y-6">
-            
+
             {/* 1. Address Selection */}
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-6">
               <div className="flex items-center justify-between">
@@ -185,11 +223,10 @@ export const Checkout: React.FC = () => {
                   <div
                     key={addr.id}
                     onClick={() => setSelectedAddressId(addr.id)}
-                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer relative ${
-                      selectedAddressId === addr.id
+                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer relative ${selectedAddressId === addr.id
                         ? 'border-primary bg-primary/2 shadow-xs'
                         : 'border-slate-100 hover:border-slate-200'
-                    }`}
+                      }`}
                   >
                     {selectedAddressId === addr.id && (
                       <span className="absolute top-3 right-3 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center">
@@ -208,26 +245,230 @@ export const Checkout: React.FC = () => {
             </div>
 
             {/* 2. Payment Method */}
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-4">
-              <h3 className="text-lg font-extrabold text-slate-800 flex items-center space-x-2">
-                <CreditCard className="w-5 h-5 text-primary" />
-                <span>Payment Method</span>
-              </h3>
-              
-              <div className="p-4 rounded-2xl border-2 border-primary bg-primary/2 shadow-xs flex items-center space-x-3.5">
-                <div className="w-5 h-5 rounded-full border-4 border-primary flex-shrink-0"></div>
-                <div>
-                  <h4 className="text-sm font-extrabold text-slate-800">Cash on Delivery</h4>
-                  <p className="text-xs text-slate-400 font-semibold mt-0.5">Pay in cash or UPI when order arrives</p>
-                </div>
+            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-extrabold text-slate-800 flex items-center space-x-2">
+                  <CreditCard className="w-5 h-5 text-primary" />
+                  <span>Choose Payment Method</span>
+                </h3>
+                <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>100% Secure Checkout</span>
+                </span>
               </div>
+
+              {/* Main Options */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {/* 1. Online Payment Option */}
+                <div
+                  onClick={() => setPaymentMode('ONLINE')}
+                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer relative ${
+                    paymentMode === 'ONLINE'
+                      ? 'border-primary bg-primary/2 shadow-xs'
+                      : 'border-slate-150 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        paymentMode === 'ONLINE' ? 'border-primary' : 'border-slate-300'
+                      }`}>
+                        {paymentMode === 'ONLINE' && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-extrabold text-slate-800 flex items-center gap-1.5">
+                          <span>Online Payment</span>
+                          <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded">FASTEST</span>
+                        </h4>
+                        <p className="text-xs text-slate-400 font-semibold mt-0.5">UPI, GPay, PhonePe, Cards, NetBanking</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Brands Logo Badges */}
+                  <div className="flex flex-wrap gap-1.5 mt-3 pt-3 border-t border-slate-100/80">
+                    <span className="px-2 py-0.5 bg-slate-100 text-[10px] font-extrabold text-slate-600 rounded">GPay</span>
+                    <span className="px-2 py-0.5 bg-slate-100 text-[10px] font-extrabold text-purple-700 rounded">PhonePe</span>
+                    <span className="px-2 py-0.5 bg-slate-100 text-[10px] font-extrabold text-sky-600 rounded">Paytm UPI</span>
+                    <span className="px-2 py-0.5 bg-slate-100 text-[10px] font-extrabold text-slate-600 rounded">Visa/Mastercard</span>
+                  </div>
+                </div>
+
+                {/* 2. Cash on Delivery Option */}
+                <div
+                  onClick={() => setPaymentMode('COD')}
+                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer relative ${
+                    paymentMode === 'COD'
+                      ? 'border-primary bg-primary/2 shadow-xs'
+                      : 'border-slate-150 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                        paymentMode === 'COD' ? 'border-primary' : 'border-slate-300'
+                      }`}>
+                        {paymentMode === 'COD' && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-extrabold text-slate-800">Cash on Delivery</h4>
+                        <p className="text-xs text-slate-400 font-semibold mt-0.5">Pay in cash or scan UPI on arrival</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-slate-100/80 text-[10px] font-bold text-slate-500">
+                    <Banknote className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Exact change recommended for cash</span>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Online Payment Sub-Tabs & Details */}
+              {paymentMode === 'ONLINE' && (
+                <div className="mt-4 p-5 bg-slate-50 rounded-2xl border border-slate-150 space-y-4 animate-scale-up">
+                  <div className="flex items-center space-x-2 border-b border-slate-200/80 pb-3">
+                    <button
+                      type="button"
+                      onClick={() => setOnlineSubMethod('UPI')}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                        onlineSubMethod === 'UPI'
+                          ? 'bg-primary text-white shadow-xs'
+                          : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      <Smartphone className="w-3.5 h-3.5" />
+                      <span>UPI & QR</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setOnlineSubMethod('CARD')}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                        onlineSubMethod === 'CARD'
+                          ? 'bg-primary text-white shadow-xs'
+                          : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      <CreditCard className="w-3.5 h-3.5" />
+                      <span>Credit / Debit Card</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setOnlineSubMethod('NETBANKING')}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
+                        onlineSubMethod === 'NETBANKING'
+                          ? 'bg-primary text-white shadow-xs'
+                          : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                      }`}
+                    >
+                      <Building2 className="w-3.5 h-3.5" />
+                      <span>Net Banking</span>
+                    </button>
+                  </div>
+
+                  {/* Sub-Method 1: UPI */}
+                  {onlineSubMethod === 'UPI' && (
+                    <div className="space-y-3">
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-slate-700">Enter UPI ID / VPA</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="e.g. yourname@okhdfcbank or 9876543210@paytm"
+                            value={upiId}
+                            onChange={(e) => setUpiId(e.target.value)}
+                            className="flex-1 px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-medium"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="p-3 bg-white rounded-xl border border-slate-200/80 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2.5">
+                          <QrCode className="w-5 h-5 text-indigo-600" />
+                          <div>
+                            <p className="font-bold text-slate-800">Scan & Pay via any UPI App</p>
+                            <p className="text-[10px] text-slate-400 font-semibold">QR code will be available on the next step</p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">INSTANT</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sub-Method 2: Cards */}
+                  {onlineSubMethod === 'CARD' && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 mb-1">Card Number</label>
+                        <input
+                          type="text"
+                          maxLength={19}
+                          placeholder="4532 •••• •••• 8892"
+                          value={cardNumber}
+                          onChange={(e) => setCardNumber(e.target.value)}
+                          className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-mono"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">Expiry Date</label>
+                          <input
+                            type="text"
+                            maxLength={5}
+                            placeholder="MM/YY"
+                            value={cardExpiry}
+                            onChange={(e) => setCardExpiry(e.target.value)}
+                            className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-center font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 mb-1">CVV / CVC</label>
+                          <input
+                            type="password"
+                            maxLength={4}
+                            placeholder="•••"
+                            value={cardCvv}
+                            onChange={(e) => setCardCvv(e.target.value)}
+                            className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-center font-mono"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sub-Method 3: Net Banking */}
+                  {onlineSubMethod === 'NETBANKING' && (
+                    <div className="space-y-2">
+                      <label className="block text-xs font-bold text-slate-700">Select Your Bank</label>
+                      <select
+                        value={selectedBank}
+                        onChange={(e) => setSelectedBank(e.target.value)}
+                        className="w-full px-3.5 py-2 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary font-semibold text-slate-700"
+                      >
+                        <option value="HDFC Bank">HDFC Bank</option>
+                        <option value="State Bank of India (SBI)">State Bank of India (SBI)</option>
+                        <option value="ICICI Bank">ICICI Bank</option>
+                        <option value="Axis Bank">Axis Bank</option>
+                        <option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option>
+                        <option value="Canara Bank">Canara Bank</option>
+                        <option value="Other Bank">Other Indian Bank</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
           </div>
 
           {/* Right Columns: Summary */}
           <div className="lg:col-span-4 space-y-6">
-            
+
             {/* Order Summary & Bill */}
             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xs space-y-6">
               <div>
@@ -300,7 +541,7 @@ export const Checkout: React.FC = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs z-50 p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 space-y-4 animate-scale-up">
             <h3 className="text-lg font-extrabold text-slate-800">Add New Address</h3>
-            
+
             <form onSubmit={handleAddAddress} className="space-y-4">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase">Address Type</label>
@@ -310,11 +551,10 @@ export const Checkout: React.FC = () => {
                       key={type}
                       type="button"
                       onClick={() => setNewAddressType(type)}
-                      className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
-                        newAddressType === type
+                      className={`px-4 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${newAddressType === type
                           ? 'bg-primary text-white border-primary shadow-xs'
                           : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                      }`}
+                        }`}
                     >
                       {type}
                     </button>

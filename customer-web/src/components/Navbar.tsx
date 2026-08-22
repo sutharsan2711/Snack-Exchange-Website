@@ -52,7 +52,15 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Right Actions (Desktop) */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-5">
+            <Link
+              to="/orders"
+              className="flex items-center space-x-1.5 px-3.5 py-2 text-slate-700 hover:text-primary hover:bg-slate-50 rounded-xl font-extrabold text-sm transition-colors cursor-pointer"
+            >
+              <ShoppingBag className="w-4 h-4 text-primary" />
+              <span>My Orders</span>
+            </Link>
+
             {isAuthenticated && user ? (
               <div className="relative">
                 <button
@@ -72,12 +80,28 @@ export const Navbar: React.FC = () => {
                       <p className="text-xs font-extrabold text-slate-800 truncate">{user.name}</p>
                       <p className="text-[10px] text-slate-400 font-semibold truncate">{user.email}</p>
                     </div>
+                    <Link
+                      to="/profile"
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="w-full flex items-center space-x-2 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                    >
+                      <User className="w-4 h-4 text-primary" />
+                      <span>My Profile & Address</span>
+                    </Link>
+                    <Link
+                      to="/orders"
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="w-full flex items-center space-x-2 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                    >
+                      <ShoppingBag className="w-4 h-4 text-primary" />
+                      <span>My Orders</span>
+                    </Link>
                     <button
                       onClick={() => {
                         logout();
                         setUserDropdownOpen(false);
                       }}
-                      className="w-full flex items-center space-x-2 px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                      className="w-full flex items-center space-x-2 px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-50 transition-colors cursor-pointer border-t border-slate-100"
                     >
                       <LogOut className="w-4 h-4" />
                       <span>Log Out</span>
@@ -109,7 +133,14 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Mobile Menu Buttons */}
-          <div className="flex md:hidden items-center space-x-4">
+          <div className="flex md:hidden items-center space-x-3">
+            <Link
+              to="/orders"
+              className="p-2 text-slate-700 hover:text-primary"
+              title="My Orders"
+            >
+              <ShoppingBag className="w-5 h-5" />
+            </Link>
             <Link
               to="/cart"
               className="relative p-2 bg-slate-50 text-slate-700 rounded-full"
@@ -141,9 +172,31 @@ export const Navbar: React.FC = () => {
             <SearchBar onSearch={(q) => { setMobileMenuOpen(false); handleSearch(q); }} placeholder="Search our menu..." />
           </div>
 
+          {/* My Profile link */}
+          {isAuthenticated && (
+            <Link
+              to="/profile"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center space-x-2 text-slate-800 font-extrabold text-sm w-full py-2 cursor-pointer border-b border-slate-100"
+            >
+              <User className="w-5 h-5 text-primary" />
+              <span>My Profile & Saved Address</span>
+            </Link>
+          )}
+
+          {/* My Orders link */}
+          <Link
+            to="/orders"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center space-x-2 text-slate-800 font-extrabold text-sm w-full py-2 cursor-pointer border-b border-slate-100"
+          >
+            <ShoppingBag className="w-5 h-5 text-primary" />
+            <span>My Orders & Live Tracking</span>
+          </Link>
+
           {/* Login for Mobile */}
           {isAuthenticated && user ? (
-            <div className="space-y-2 pt-2 border-t border-slate-100">
+            <div className="space-y-2 pt-1">
               <div className="flex items-center space-x-2 text-slate-800 font-extrabold text-sm">
                 <User className="w-5 h-5 text-primary" />
                 <span>Signed in as {user.name}</span>

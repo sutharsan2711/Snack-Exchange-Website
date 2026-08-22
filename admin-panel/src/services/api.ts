@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8085/api';
+
 export const api = axios.create({
-  baseURL: 'http://localhost:8085/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -17,6 +19,12 @@ export interface Restaurant {
   priceRange: string;
   address: string;
   featured: boolean;
+  isOpen?: boolean;
+  manualIsOpen?: boolean;
+  autoSchedule?: boolean;
+  openTime?: string;
+  closeTime?: string;
+  showBanner?: boolean;
 }
 
 export interface Category {
@@ -107,6 +115,32 @@ export const apiService = {
 
   updateRestaurant: async (id: string, restaurantData: Restaurant): Promise<Restaurant> => {
     const response = await api.put<Restaurant>(`/restaurants/${id}`, restaurantData);
+    return response.data;
+  },
+
+  // User & Staff management endpoints
+  login: async (credentials: any): Promise<any> => {
+    const response = await api.post('/auth/login', credentials);
+    return response.data;
+  },
+
+  getUsers: async (): Promise<any[]> => {
+    const response = await api.get('/auth/users');
+    return response.data;
+  },
+
+  createUser: async (userData: any): Promise<any> => {
+    const response = await api.post('/auth/users', userData);
+    return response.data;
+  },
+
+  updateUserStatus: async (id: number | string, active: boolean): Promise<any> => {
+    const response = await api.put(`/auth/users/${id}/status`, { active });
+    return response.data;
+  },
+
+  loginWithGoogle: async (token: string): Promise<any> => {
+    const response = await api.post('/auth/google', { token });
     return response.data;
   },
 };

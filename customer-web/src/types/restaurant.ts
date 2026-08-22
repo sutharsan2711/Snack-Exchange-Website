@@ -8,4 +8,10 @@ export interface Restaurant {
   priceRange: string; // E.g., "₹200 for two"
   address: string;
   featured?: boolean;
+  isOpen?: boolean;
+  manualIsOpen?: boolean;
+  autoSchedule?: boolean;
+  openTime?: string;
+  closeTime?: string;
+  showBanner?: boolean;
 }

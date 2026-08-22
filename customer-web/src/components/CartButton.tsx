@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingBag, ArrowRight } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import { useCartStore } from '../store/cartStore';
 
 export const CartButton: React.FC = () => {
@@ -26,11 +26,6 @@ export const CartButton: React.FC = () => {
             </p>
             <p className="text-base font-extrabold">₹{total}</p>
           </div>
-        </div>
-        
-        <div className="flex items-center space-x-2 font-bold text-sm uppercase tracking-wider">
-          <span>View Cart</span>
-          <ArrowRight className="w-4 h-4 animate-pulse" />
         </div>
       </Link>
     </div>

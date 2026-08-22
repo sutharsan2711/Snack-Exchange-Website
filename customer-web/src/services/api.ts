@@ -8,9 +8,11 @@ export interface Category {
   image: string;
 }
 
+export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8085/api';
+
 // Axios instance configured to target the Spring Boot context path /api
 export const api = axios.create({
-  baseURL: 'http://localhost:8085/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -63,6 +65,14 @@ export const apiService = {
 
 
   /**
+   * Get all customer orders
+   */
+  getOrders: async (): Promise<any[]> => {
+    const response = await api.get<any[]>('/orders');
+    return response.data;
+  },
+
+  /**
    * Submit a new customer order
    */
   placeOrder: async (orderData: {
@@ -77,6 +87,52 @@ export const apiService = {
     paymentMethod: string;
   }): Promise<{ success: boolean; orderId: string }> => {
     const response = await api.post<{ success: boolean; orderId: string }>('/orders', orderData);
+    return response.data;
+  },
+
+  /**
+   * Customer Login
+   */
+  login: async (credentials: any) => {
+    const response = await api.post('/auth/login', credentials);
+    return response.data;
+  },
+
+  /**
+   * Customer Registration
+   */
+  register: async (userData: any) => {
+    const response = await api.post('/auth/register', userData);
+    return response.data;
+  },
+
+  /**
+   * Google OAuth Login
+   */
+  loginWithGoogle: async (token: string) => {
+    const response = await api.post('/auth/google', { token });
+    return response.data;
+  },
+
+  /**
+   * Get Customer Profile
+   */
+  getProfile: async (id: string | number) => {
+    const response = await api.get(`/auth/profile/${id}`);
+    return response.data;
+  },
+
+  /**
+   * Update Customer Profile
+   */
+  updateProfile: async (id: string | number, profileData: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    address?: string;
+    password?: string;
+  }) => {
+    const response = await api.put(`/auth/profile/${id}`, profileData);
     return response.data;
   },
 };

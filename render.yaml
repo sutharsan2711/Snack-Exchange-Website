@@ -1,0 +1,62 @@
+services:
+  # 1. Backend REST API (Web Service)
+  - type: web
+    name: snack-exchange-backend
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 8085
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: 4000
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        value: foodie_db
+      - key: DB_SSL
+        value: "true"
+      - key: GOOGLE_CLIENT_ID
+        value: 393841138681-846rkeig2b9ea1f04os0dtglmdjfhgt5.apps.googleusercontent.com
+
+  # 2. Customer Web Application (Static Site)
+  - type: web
+    name: snack-exchange-customer
+    runtime: static
+    plan: free
+    rootDir: customer-web
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+      - key: VITE_GOOGLE_CLIENT_ID
+        value: 393841138681-846rkeig2b9ea1f04os0dtglmdjfhgt5.apps.googleusercontent.com
+
+  # 3. Admin Management Panel (Static Site)
+  - type: web
+    name: snack-exchange-admin
+    runtime: static
+    plan: free
+    rootDir: admin-panel
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+      - key: VITE_GOOGLE_CLIENT_ID
+        value: 393841138681-846rkeig2b9ea1f04os0dtglmdjfhgt5.apps.googleusercontent.com

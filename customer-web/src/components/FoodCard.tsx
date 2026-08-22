@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, Plus, Minus } from 'lucide-react';
+import { Plus, Minus } from 'lucide-react';
 import type { FoodItem } from '../types/food';
 import { useCartStore } from '../store/cartStore';
 
@@ -57,11 +57,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
           {food.name}
         </h4>
 
-        {/* Rating */}
-        <div className="flex items-center space-x-1 mt-1 text-xs text-amber-500 font-semibold">
-          <Star className="w-3.5 h-3.5 fill-amber-400 stroke-amber-400" />
-          <span>{food.rating.toFixed(1)}</span>
-        </div>
+
 
         {/* Price */}
         <div className="text-base font-extrabold text-slate-800 mt-1">

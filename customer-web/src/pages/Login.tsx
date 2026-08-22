@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuthStore } from '../store/authStore';
-import { Mail, Lock, User, Phone, ArrowRight, Sparkles, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { apiService } from '../services/api';
+import { Mail, Lock, User, Phone, ArrowRight, ArrowLeft, Sparkles, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -21,7 +23,7 @@ export const Login: React.FC = () => {
   const [error, setError] = useState('');
 
   // Submit Handler
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -37,39 +39,93 @@ export const Login: React.FC = () => {
 
     setLoading(true);
 
-    setTimeout(() => {
-      const userProfile = {
-        id: 'usr-' + Date.now().toString().slice(-6),
-        name: mode === 'signup' ? name.trim() : (email.split('@')[0] || 'Customer'),
-        email: email.trim(),
-        phone: phone.trim() || '+91 98765 43210',
-        address: '123 Main Street, Sector 4, New Delhi',
-      };
+    try {
+      if (mode === 'login') {
+        const userData = await apiService.login({
+          email: email.trim(),
+          password: password.trim()
+        });
 
-      login(userProfile);
+        if (userData.role !== 'CUSTOMER') {
+          setError('This portal is only for Customers.');
+          setLoading(false);
+          return;
+        }
+
+        login(userData);
+        setLoading(false);
+        navigate(redirect);
+      } else {
+        const userData = await apiService.register({
+          name: name.trim(),
+          email: email.trim(),
+          password: password.trim(),
+          phone: phone.trim() || '+91 98765 43210',
+          address: '123 Main Street, Sector 4, New Delhi',
+        });
+        login(userData);
+        setLoading(false);
+        navigate(redirect);
+      }
+    } catch (err: any) {
+      console.error('Auth error:', err);
+      setError(err.response?.data?.message || 'Authentication failed. Please check your credentials.');
+      setLoading(false);
+    }
+  };
+
+  // Google OAuth Success Handler
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    if (!credentialResponse?.credential) {
+      setError('No credential received from Google.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const userData = await apiService.loginWithGoogle(credentialResponse.credential);
+      login(userData);
       setLoading(false);
       navigate(redirect);
-    }, 600);
+    } catch (err: any) {
+      console.error('Google login error:', err);
+      setError(err.response?.data?.message || 'Google sign-in failed.');
+      setLoading(false);
+    }
   };
 
   // Quick Demo Login Handler
-  const handleDemoLogin = () => {
+  const handleDemoLogin = async () => {
     setLoading(true);
-    setTimeout(() => {
-      login({
-        id: 'usr-demo123',
-        name: 'Alex Johnson',
-        email: 'alex.johnson@example.com',
-        phone: '+91 98765 43210',
-        address: '123 Main Street, Sector 4, New Delhi',
+    setError('');
+    try {
+      const userData = await apiService.login({
+        email: 'customer@example.com',
+        password: 'customer123'
       });
+      login(userData);
       setLoading(false);
       navigate(redirect);
-    }, 400);
+    } catch (err: any) {
+      console.error('Demo auth error:', err);
+      setError(err.response?.data?.message || 'Demo authentication failed.');
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-slate-50 via-brand-light to-primary/5">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 bg-gradient-to-br from-slate-50 via-brand-light to-primary/5 relative">
+      {/* Back to Home Link */}
+      <Link
+        to="/"
+        className="mb-4 inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500 hover:text-primary transition-colors bg-white/80 backdrop-blur-xs px-4 py-2 rounded-full border border-slate-200 shadow-xs"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        <span>Back to Store Menu</span>
+      </Link>
+
       <div className="w-full max-w-md bg-white rounded-3xl border border-slate-100 shadow-2xl overflow-hidden p-8 space-y-8 animate-scale-up">
         
         {/* Top Branding & Mode Switch */}
@@ -116,6 +172,27 @@ export const Login: React.FC = () => {
             ⚠️ {error}
           </div>
         )}
+
+        {/* Google One-Click Login Section */}
+        <div className="space-y-3">
+          <div className="flex justify-center w-full">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError('Google sign-in was cancelled or encountered an error.')}
+              theme="outline"
+              size="large"
+              shape="pill"
+              text={mode === 'login' ? 'signin_with' : 'signup_with'}
+              width="360"
+            />
+          </div>
+
+          <div className="flex items-center gap-3 text-xs text-slate-400 font-semibold py-1">
+            <div className="flex-1 h-px bg-slate-100" />
+            <span>OR WITH EMAIL</span>
+            <div className="flex-1 h-px bg-slate-100" />
+          </div>
+        </div>
 
         {/* Auth Form */}
         <form onSubmit={handleSubmit} className="space-y-4">

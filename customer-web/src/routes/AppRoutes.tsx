@@ -4,6 +4,8 @@ import { Home } from '../pages/Home';
 import { Cart } from '../pages/Cart';
 import { Checkout } from '../pages/Checkout';
 import { Login } from '../pages/Login';
+import { Orders } from '../pages/Orders';
+import { Profile } from '../pages/Profile';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -11,6 +13,8 @@ export const AppRoutes: React.FC = () => {
       <Route path="/" element={<Home />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/checkout" element={<Checkout />} />
+      <Route path="/orders" element={<Orders />} />
+      <Route path="/profile" element={<Profile />} />
       <Route path="/login" element={<Login />} />
       {/* Redirect any other route to home */}
       <Route path="*" element={<Navigate to="/" replace />} />

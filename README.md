@@ -1,15 +1,14 @@
 # Snack Exchange - Food Ordering Platform
 
-A full-stack online food ordering, kitchen management, and admin platform.
+A full-stack online food ordering and admin management platform.
 
 ## 🚀 Applications & Ports
 
 | Component | Technology | Default URL / Port |
 | :--- | :--- | :--- |
-| **Backend API** | Spring Boot (Java 21) & MySQL | `http://localhost:8085/api` |
+| **Backend API** | Node.js (Express.js) & TiDB / MySQL | `http://localhost:8085/api` |
 | **Customer Web** | React (Vite) & Tailwind CSS | `http://localhost:5173/` |
 | **Admin Panel** | React (Vite) & Tailwind CSS | `http://localhost:5174/` |
-| **Chef Panel (KDS)** | React (Vite) & Tailwind CSS | `http://localhost:5175/` |
 
 ---
 
@@ -17,22 +16,22 @@ A full-stack online food ordering, kitchen management, and admin platform.
 
 ```
 Snack-Exchange-Website/
-├── backend/          # Spring Boot REST API & MySQL Database Entities
-├── customer-web/     # Customer ordering portal (Menu, Cart, Checkout, Login)
-├── admin-panel/      # Restaurant Admin Panel (Menu, Orders, Analytics, Store Settings)
-└── chef-panel/       # Kitchen Display System (Live Orders, 20-35m Prep Timers, Stock Manager)
+├── backend/          # Express.js REST API, TiDB/MySQL Connection & Routes
+├── customer-web/     # Customer ordering portal (Menu, Cart, Checkout, Login, My Orders)
+└── admin-panel/      # Restaurant Admin Panel (Menu, Orders, Analytics, Store Settings)
 ```
 
 ---
 
 ## 🛠️ How to Run Locally
 
-### 1. Backend (Spring Boot)
-Ensure MySQL is running locally and database credentials match `backend/src/main/resources/application.properties`.
+### 1. Backend (Express.js)
+Ensure MySQL (or TiDB) is configured in `backend/.env`.
 
 ```bash
 cd backend
-mvn spring-boot:run
+npm install
+npm start
 ```
 
 ### 2. Customer Web Application
@@ -49,16 +48,8 @@ npm install
 npm run dev
 ```
 
-### 4. Chef Kitchen Display System (KDS)
-```bash
-cd chef-panel
-npm install
-npm run dev
-```
-
 ---
 
 ## ✨ Features
-* **Customer Web**: Food category browsing, Veg/Non-Veg filters, cart management, customer login, and checkout.
-* **Admin Panel**: Static search header, scrollable menu & category tables, live order status controls (Accept/Cancel), and financial analytics reports.
-* **Chef Panel**: Live kitchen order queue, 20-min countdown timer with +10 min extension to 35 min, and live item stock availability toggle.
+* **Customer Web**: Food category browsing, Veg/Non-Veg filters, cart management, customer login, checkout, and live order tracking.
+* **Admin Panel**: Static search header, scrollable menu & category tables, live order status controls (Accept/Dispatch/Cancel), and financial analytics reports.

@@ -5,9 +5,14 @@ export interface FooterConfig {
   // Brand column
   brandName: string;
   brandTagline: string;
-  twitterUrl: string;
+  twitterUrl?: string;
   instagramUrl: string;
-  githubUrl: string;
+  swiggyUrl?: string;
+  justdialUrl?: string;
+  githubUrl?: string;
+  mapsUrl?: string;
+  address?: string;
+  openingHours?: string;
 
   // Company column
   companyLinks: { label: string; url: string }[];
@@ -22,29 +27,32 @@ export interface FooterConfig {
   copyrightText: string;
 }
 
-export const FOOTER_STORAGE_KEY = 'bistro_footer_config';
+export const FOOTER_STORAGE_KEY = 'snack_exchange_footer_config';
 
 export const DEFAULT_FOOTER_CONFIG: FooterConfig = {
-  brandName: 'Foodie',
+  brandName: 'Snack Exchange',
   brandTagline:
-    'Delicious food, delivered fast. Discover the best restaurants near you and order your favorite meals in just a few clicks.',
-  twitterUrl: '#',
-  instagramUrl: '#',
-  githubUrl: '#',
+    'Crispy snacks, gourmet burgers, loaded fries & sweet desserts made fresh. Visit us in Saravanampatti or order online.',
+  instagramUrl: 'https://www.instagram.com/_snack.exchange__?utm_source=ig_web_button_share_sheet&igsi=ZDNlZDc0MzIxNw==',
+  swiggyUrl: 'https://www.swiggy.com/city/coimbatore/snack-exchange-saravanampatti-rest1417490',
+  justdialUrl: 'https://www.justdial.com/Coimbatore/Snack-Exchange-Saravanampatti/0422PX422-X422-260613000307-C2T3_BZDET/amp',
+  mapsUrl: 'https://share.google/Fhxt9w4vHjqVJVK0w',
+  address: 'Shop No. 8, Meena Food Court, Vasantham Nagar, Thudiyalur Road, Saravanampatti, Coimbatore, Tamil Nadu 641035',
+  openingHours: 'Open Daily: 3:00 PM – 11:00 PM',
   companyLinks: [
-    { label: 'About Us', url: '#' },
-    { label: 'Careers', url: '#' },
-    { label: 'Team', url: '#' },
-    { label: 'Foodie One', url: '#' },
+    { label: 'Our Story', url: '/' },
+    { label: 'Food Menu', url: '/' },
+    { label: 'Order on Swiggy', url: 'https://www.swiggy.com/city/coimbatore/snack-exchange-saravanampatti-rest1417490' },
+    { label: 'Justdial Profile', url: 'https://www.justdial.com/Coimbatore/Snack-Exchange-Saravanampatti/0422PX422-X422-260613000307-C2T3_BZDET/amp' },
   ],
   supportLinks: [
-    { label: 'Help & Support', url: '#' },
-    { label: 'Partner with us', url: '#' },
-    { label: 'Ride with us', url: '#' },
-    { label: 'Terms & Conditions', url: '#' },
+    { label: 'Follow on Instagram', url: 'https://www.instagram.com/_snack.exchange__?utm_source=ig_web_button_share_sheet&igsi=ZDNlZDc0MzIxNw==' },
+    { label: 'Order via Swiggy', url: 'https://www.swiggy.com/city/coimbatore/snack-exchange-saravanampatti-rest1417490' },
+    { label: 'View on Justdial', url: 'https://www.justdial.com/Coimbatore/Snack-Exchange-Saravanampatti/0422PX422-X422-260613000307-C2T3_BZDET/amp' },
+    { label: 'Google Maps Directions', url: 'https://share.google/Fhxt9w4vHjqVJVK0w' },
   ],
-  deliveryCities: ['Delhi NCR', 'Mumbai', 'Bangalore', 'Hyderabad', 'Pune'],
-  copyrightText: `© ${new Date().getFullYear()} Foodie Technologies Pvt. Ltd. All rights reserved.`,
+  deliveryCities: ['Saravanampatti', 'Thudiyalur', 'Kalapatti', 'Keeranatham', 'Ganapathy', 'Coimbatore'],
+  copyrightText: `© ${new Date().getFullYear()} Snack Exchange. Shop No. 8, Meena Food Court, Saravanampatti, Coimbatore. All rights reserved.`,
 };
 
 export function loadFooterConfig(): FooterConfig {
