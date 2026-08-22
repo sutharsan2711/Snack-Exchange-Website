@@ -16,7 +16,7 @@ const poolConfig = process.env.DATABASE_URL
       connectTimeout: 10000,
       enableKeepAlive: true,
       keepAliveInitialDelay: 0,
-      ssl: isSslRequired ? { minVersion: 'TLSv1.2', rejectUnauthorized: true } : undefined,
+      ssl: isSslRequired ? { minVersion: 'TLSv1.2', rejectUnauthorized: false } : undefined,
     }
   : {
       host: process.env.DB_HOST || 'localhost',
@@ -30,7 +30,7 @@ const poolConfig = process.env.DATABASE_URL
       connectTimeout: 10000,
       enableKeepAlive: true,
       keepAliveInitialDelay: 0,
-      ssl: isSslRequired ? { minVersion: 'TLSv1.2', rejectUnauthorized: true } : undefined,
+      ssl: isSslRequired ? { minVersion: 'TLSv1.2', rejectUnauthorized: false } : undefined,
     };
 
 export const pool = mysql.createPool(poolConfig);

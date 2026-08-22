@@ -35,18 +35,49 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'UP', timestamp: new Date().toISOString() });
 });
 
+// Diagnostic database test endpoint
+app.get(['/api/test-db', '/test-db'], async (req, res) => {
+  try {
+    const { pool } = await import('./db.js');
+    const [rows] = await pool.query('SELECT 1 as connected, DATABASE() as current_db, NOW() as server_time');
+    res.json({
+      success: true,
+      message: 'TiDB Cloud Database connected successfully!',
+      data: rows[0],
+      env: {
+        host: process.env.DB_HOST ? `${process.env.DB_HOST.substring(0, 15)}...` : 'NOT_SET',
+        user: process.env.DB_USER ? `${process.env.DB_USER.substring(0, 8)}...` : 'NOT_SET',
+        database: process.env.DB_NAME || 'NOT_SET',
+      }
+    });
+  } catch (err) {
+    console.error('TiDB Cloud diagnostic error:', err);
+    res.status(500).json({
+      success: false,
+      error: err.message,
+      code: err.code,
+      envState: {
+        hostSet: !!process.env.DB_HOST,
+        userSet: !!process.env.DB_USER,
+        passwordSet: !!process.env.DB_PASSWORD,
+        dbSet: !!process.env.DB_NAME,
+      }
+    });
+  }
+});
+
 // Root welcome status endpoint
 app.get('/', (req, res) => {
   res.json({
     status: 'ONLINE',
     service: 'Snack Exchange Express API',
-    database: dbInitialized ? 'Connected' : 'Ready',
     endpoints: {
       categories: '/api/categories',
       foods: '/api/foods',
       restaurants: '/api/restaurants',
       orders: '/api/orders',
       health: '/api/health',
+      testDb: '/api/test-db',
     },
   });
 });
@@ -61,6 +92,7 @@ app.get('/api', (req, res) => {
       restaurants: '/api/restaurants',
       orders: '/api/orders',
       health: '/api/health',
+      testDb: '/api/test-db',
     },
   });
 });
