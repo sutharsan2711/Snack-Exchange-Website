@@ -57,16 +57,30 @@ export const AnalyticsReport: React.FC = () => {
     fetchData();
   }, []);
 
+  // Helper to parse order date
+  const parseOrderDate = (dateStr?: string): Date => {
+    if (!dateStr) return new Date();
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? new Date() : d;
+  };
+
   // Filter orders by selected time range
   const getFilteredOrders = () => {
     if (orders.length === 0) return [];
     const now = new Date();
+    
     return orders.filter((o) => {
-      if (!o.createdAt) return true;
-      const orderDate = new Date(o.createdAt);
-      const diffDays = (now.getTime() - orderDate.getTime()) / (1000 * 3600 * 24);
+      const orderDate = parseOrderDate(o.createdAt);
+      const diffMs = now.getTime() - orderDate.getTime();
+      const diffDays = diffMs / (1000 * 3600 * 24);
 
-      if (timeRange === 'today') return diffDays <= 1;
+      if (timeRange === 'today') {
+        return (
+          orderDate.getDate() === now.getDate() &&
+          orderDate.getMonth() === now.getMonth() &&
+          orderDate.getFullYear() === now.getFullYear()
+        ) || diffDays <= 1;
+      }
       if (timeRange === 'week') return diffDays <= 7;
       if (timeRange === 'month') return diffDays <= 30;
       if (timeRange === 'year') return diffDays <= 365;
@@ -76,85 +90,83 @@ export const AnalyticsReport: React.FC = () => {
 
   const filteredOrders = getFilteredOrders();
   const validOrders = filteredOrders.filter((o) => o.status !== 'Cancelled');
-  const totalRevenue = validOrders.reduce((acc, o) => acc + (o.total || 0), 0);
+  const totalRevenue = validOrders.reduce((acc, o) => acc + (Number(o.total) || 0), 0);
   const totalOrdersCount = filteredOrders.length;
-  const avgOrderValue = totalOrdersCount > 0 ? Math.round(totalRevenue / Math.max(1, validOrders.length)) : 0;
+  const deliveredOrdersCount = filteredOrders.filter((o) => o.status === 'Delivered').length;
+  const cancelledOrdersCount = filteredOrders.filter((o) => o.status === 'Cancelled').length;
+  const avgOrderValue = validOrders.length > 0 ? Math.round(totalRevenue / validOrders.length) : 0;
+  const fulfillmentRate = totalOrdersCount > 0 ? Math.round(((totalOrdersCount - cancelledOrdersCount) / totalOrdersCount) * 100) : 100;
 
-  // Category Revenue Distribution
-  const categoryColors = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#14b8a6'];
+  // Category Revenue Distribution calculated strictly from real sales
+  const categoryColors = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#3b82f6', '#14b8a6', '#06b6d4'];
   
   const categoryStats: CategoryShare[] = (() => {
     const map: Record<string, { revenue: number; count: number }> = {};
     
-    // Process real order items if available
-    filteredOrders.forEach((o) => {
-      if (o.status === 'Cancelled') return;
+    // Group from valid order items
+    validOrders.forEach((o) => {
       if (o.items && o.items.length > 0) {
         o.items.forEach((item) => {
-          const cat = item.foodItem?.category || 'General';
+          const cat = item.foodItem?.category || 'Other';
           if (!map[cat]) map[cat] = { revenue: 0, count: 0 };
-          map[cat].revenue += (item.price || 0) * (item.quantity || 1);
-          map[cat].count += item.quantity || 1;
+          const itemPrice = Number(item.price || item.foodItem?.price || 0);
+          const itemQty = Number(item.quantity || 1);
+          map[cat].revenue += itemPrice * itemQty;
+          map[cat].count += itemQty;
         });
       }
     });
 
-    // If no order item details, group food items as baseline
-    if (Object.keys(map).length === 0 && foods.length > 0) {
-      foods.forEach((f) => {
-        const cat = f.category || 'General';
-        if (!map[cat]) map[cat] = { revenue: f.price * 12, count: 12 };
-        else {
-          map[cat].revenue += f.price * 8;
-          map[cat].count += 8;
-        }
-      });
-    }
-
-    const totalCatRev = Object.values(map).reduce((a, b) => a + b.revenue, 0) || 1;
-    return Object.entries(map).map(([name, val], idx) => ({
-      name,
-      revenue: val.revenue,
-      count: val.count,
-      color: categoryColors[idx % categoryColors.length],
-      percentage: Math.round((val.revenue / totalCatRev) * 100),
-    })).sort((a, b) => b.revenue - a.revenue);
-  })();
-
-  // Top Selling Dishes Leaderboard
-  const topDishes: TopDish[] = (() => {
-    const dishMap: Record<string, { units: number; revenue: number; food: FoodItem }> = {};
-
-    filteredOrders.forEach((o) => {
-      if (o.status === 'Cancelled') return;
-      if (o.items) {
-        o.items.forEach((item) => {
-          if (!item.foodItem) return;
-          const id = item.foodItem.id;
-          if (!dishMap[id]) {
-            dishMap[id] = { units: 0, revenue: 0, food: item.foodItem };
-          }
-          dishMap[id].units += item.quantity || 1;
-          dishMap[id].revenue += (item.price || 0) * (item.quantity || 1);
-        });
-      }
-    });
-
-    // Fallback if no order items yet: map all foods with estimated popularity
-    if (Object.keys(dishMap).length === 0 && foods.length > 0) {
-      return foods.slice(0, 5).map((f, idx) => ({
-        id: f.id,
-        name: f.name,
-        category: f.category,
-        price: f.price,
-        image: f.image,
-        unitsSold: 45 - idx * 7,
-        totalRevenue: (45 - idx * 7) * f.price,
-        isVeg: f.isVeg,
+    const entries = Object.entries(map);
+    if (entries.length === 0) {
+      // If no item-level orders in range, list categories with 0
+      const uniqueCats = Array.from(new Set(foods.map((f) => f.category).filter(Boolean)));
+      return uniqueCats.slice(0, 5).map((cat, idx) => ({
+        name: cat,
+        revenue: 0,
+        count: 0,
+        color: categoryColors[idx % categoryColors.length],
+        percentage: 0,
       }));
     }
 
-    return Object.values(dishMap)
+    const totalCatRev = entries.reduce((acc, [, val]) => acc + val.revenue, 0) || 1;
+    return entries
+      .map(([name, val], idx) => ({
+        name,
+        revenue: Math.round(val.revenue),
+        count: val.count,
+        color: categoryColors[idx % categoryColors.length],
+        percentage: Math.round((val.revenue / totalCatRev) * 100),
+      }))
+      .sort((a, b) => b.revenue - a.revenue);
+  })();
+
+  // Top Selling Dishes strictly aggregated from actual order items
+  const topDishes: TopDish[] = (() => {
+    const dishMap: Record<string, { units: number; revenue: number; food: FoodItem }> = {};
+
+    validOrders.forEach((o) => {
+      if (o.items && o.items.length > 0) {
+        o.items.forEach((item) => {
+          if (!item.foodItem) return;
+          const id = item.foodItem.id || item.foodItem.name;
+          if (!dishMap[id]) {
+            dishMap[id] = {
+              units: 0,
+              revenue: 0,
+              food: item.foodItem,
+            };
+          }
+          const qty = Number(item.quantity || 1);
+          const price = Number(item.price || item.foodItem.price || 0);
+          dishMap[id].units += qty;
+          dishMap[id].revenue += price * qty;
+        });
+      }
+    });
+
+    const soldDishes = Object.values(dishMap)
       .map((d) => ({
         id: d.food.id,
         name: d.food.name,
@@ -162,31 +174,165 @@ export const AnalyticsReport: React.FC = () => {
         price: d.food.price,
         image: d.food.image,
         unitsSold: d.units,
-        totalRevenue: d.revenue,
-        isVeg: d.food.isVeg,
+        totalRevenue: Math.round(d.revenue),
+        isVeg: Boolean(d.food.isVeg),
       }))
-      .sort((a, b) => b.unitsSold - a.unitsSold)
+      .sort((a, b) => b.unitsSold !== a.unitsSold ? b.unitsSold - a.unitsSold : b.totalRevenue - a.totalRevenue)
       .slice(0, 5);
+
+    if (soldDishes.length > 0) {
+      return soldDishes;
+    }
+
+    // If no sales in current period, display top menu items with 0 sales
+    return foods.slice(0, 5).map((f) => ({
+      id: f.id,
+      name: f.name,
+      category: f.category,
+      price: f.price,
+      image: f.image,
+      unitsSold: 0,
+      totalRevenue: 0,
+      isVeg: Boolean(f.isVeg),
+    }));
   })();
 
-  // Multi-day Revenue Trend chart data
+  // Multi-day Revenue Trend computed strictly from real order timestamps
   const chartPoints = (() => {
-    const daysCount = timeRange === 'today' ? 12 : timeRange === 'week' ? 7 : timeRange === 'month' ? 14 : 12;
-    const labels = timeRange === 'today'
-      ? ['8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM', '6 PM', '7 PM']
-      : timeRange === 'week'
-      ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-      : timeRange === 'month'
-      ? ['Day 1', 'Day 3', 'Day 5', 'Day 7', 'Day 9', 'Day 11', 'Day 13', 'Day 15', 'Day 18', 'Day 21', 'Day 24', 'Day 27', 'Day 30']
-      : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const now = new Date();
 
-    const baseRev = totalRevenue > 0 ? totalRevenue / daysCount : 4200;
-    return labels.map((lbl, idx) => {
-      const variation = Math.sin(idx * 0.8) * 0.3 + Math.cos(idx * 0.5) * 0.2;
-      const rev = Math.max(800, Math.round(baseRev * (1 + variation)));
-      const ords = Math.max(2, Math.round(rev / Math.max(150, avgOrderValue || 250)));
-      return { day: lbl, rev, orders: ords };
+    if (timeRange === 'today') {
+      const buckets = [
+        { label: '06:00', startHour: 6, endHour: 9 },
+        { label: '09:00', startHour: 9, endHour: 12 },
+        { label: '12:00', startHour: 12, endHour: 15 },
+        { label: '15:00', startHour: 15, endHour: 18 },
+        { label: '18:00', startHour: 18, endHour: 21 },
+        { label: '21:00', startHour: 21, endHour: 24 },
+      ];
+
+      return buckets.map((b) => {
+        let rev = 0;
+        let ords = 0;
+        validOrders.forEach((o) => {
+          const d = parseOrderDate(o.createdAt);
+          const h = d.getHours();
+          if (h >= b.startHour && h < b.endHour) {
+            rev += Number(o.total || 0);
+            ords += 1;
+          }
+        });
+        return { day: b.label, rev: Math.round(rev), orders: ords };
+      });
+    }
+
+    if (timeRange === 'week') {
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const past7Days = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date();
+        d.setDate(now.getDate() - (6 - i));
+        return {
+          dayStr: days[d.getDay()],
+          dateKey: `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`,
+          label: `${days[d.getDay()]} ${d.getDate()}`,
+        };
+      });
+
+      return past7Days.map((slot) => {
+        let rev = 0;
+        let ords = 0;
+        validOrders.forEach((o) => {
+          const d = parseOrderDate(o.createdAt);
+          const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+          if (key === slot.dateKey) {
+            rev += Number(o.total || 0);
+            ords += 1;
+          }
+        });
+        return { day: slot.label, rev: Math.round(rev), orders: ords };
+      });
+    }
+
+    if (timeRange === 'month') {
+      const intervals = [
+        { label: 'Days 1-7', start: 1, end: 7 },
+        { label: 'Days 8-14', start: 8, end: 14 },
+        { label: 'Days 15-21', start: 15, end: 21 },
+        { label: 'Days 22-28', start: 22, end: 28 },
+        { label: 'Days 29+', start: 29, end: 31 },
+      ];
+
+      return intervals.map((slot) => {
+        let rev = 0;
+        let ords = 0;
+        validOrders.forEach((o) => {
+          const d = parseOrderDate(o.createdAt);
+          const dayNum = d.getDate();
+          if (dayNum >= slot.start && dayNum <= slot.end) {
+            rev += Number(o.total || 0);
+            ords += 1;
+          }
+        });
+        return { day: slot.label, rev: Math.round(rev), orders: ords };
+      });
+    }
+
+    // Year or All: Group by months
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return monthNames.map((mName, mIdx) => {
+      let rev = 0;
+      let ords = 0;
+      validOrders.forEach((o) => {
+        const d = parseOrderDate(o.createdAt);
+        if (d.getMonth() === mIdx) {
+          rev += Number(o.total || 0);
+          ords += 1;
+        }
+      });
+      return { day: mName, rev: Math.round(rev), orders: ords };
     });
+  })();
+
+  // Payment Breakdown calculated dynamically from real orders
+  const paymentMethods = (() => {
+    const counts: Record<string, number> = {
+      UPI: 0,
+      Card: 0,
+      COD: 0,
+    };
+
+    filteredOrders.forEach((o) => {
+      const pm = (o.paymentMethod || 'COD').toUpperCase();
+      if (pm.includes('UPI') || pm.includes('GPAY') || pm.includes('PHONEPE') || pm.includes('ONLINE')) {
+        counts.UPI += 1;
+      } else if (pm.includes('CARD') || pm.includes('DEBIT') || pm.includes('CREDIT')) {
+        counts.Card += 1;
+      } else {
+        counts.COD += 1;
+      }
+    });
+
+    const total = totalOrdersCount || 1;
+    return [
+      {
+        name: 'UPI / Online Payment',
+        count: counts.UPI,
+        percentage: totalOrdersCount > 0 ? Math.round((counts.UPI / total) * 100) : 0,
+        color: 'bg-emerald-500',
+      },
+      {
+        name: 'Credit & Debit Cards',
+        count: counts.Card,
+        percentage: totalOrdersCount > 0 ? Math.round((counts.Card / total) * 100) : 0,
+        color: 'bg-indigo-500',
+      },
+      {
+        name: 'Cash on Delivery (COD)',
+        count: counts.COD,
+        percentage: totalOrdersCount > 0 ? Math.round((counts.COD / total) * 100) : 0,
+        color: 'bg-amber-500',
+      },
+    ];
   })();
 
   // Export CSV handler
@@ -210,22 +356,16 @@ export const AnalyticsReport: React.FC = () => {
     }, 600);
   };
 
-  // Payment Breakdown
-  const paymentMethods = [
-    { name: 'UPI / GPay / PhonePe', percentage: 58, count: Math.round(totalOrdersCount * 0.58) || 32, color: 'bg-emerald-500' },
-    { name: 'Credit & Debit Cards', percentage: 26, count: Math.round(totalOrdersCount * 0.26) || 14, color: 'bg-indigo-500' },
-    { name: 'Cash on Delivery', percentage: 16, count: Math.round(totalOrdersCount * 0.16) || 9, color: 'bg-amber-500' },
-  ];
-
   // SVG Chart path calculation
-  const maxRev = Math.max(...chartPoints.map((p) => p.rev), 1000);
+  const maxRev = Math.max(...chartPoints.map((p) => p.rev), 500);
   const svgWidth = 600;
   const svgHeight = 180;
   const padding = 20;
 
   const pointsString = chartPoints
     .map((p, i) => {
-      const x = padding + (i / (chartPoints.length - 1)) * (svgWidth - padding * 2);
+      const divisor = chartPoints.length > 1 ? chartPoints.length - 1 : 1;
+      const x = padding + (i / divisor) * (svgWidth - padding * 2);
       const y = svgHeight - padding - (p.rev / maxRev) * (svgHeight - padding * 2);
       return `${x},${y}`;
     })
@@ -304,8 +444,8 @@ export const AnalyticsReport: React.FC = () => {
               &#8377;{totalRevenue.toLocaleString('en-IN')}
             </span>
             <div className="flex items-center space-x-1 text-xs font-bold text-emerald-400">
-              <ArrowUpRight className="w-4 h-4" />
-              <span>+18.4% vs last period</span>
+              <CheckCircle2 className="w-4 h-4" />
+              <span>{validOrders.length} successful {validOrders.length === 1 ? 'sale' : 'sales'}</span>
             </div>
           </div>
         </div>
@@ -324,7 +464,7 @@ export const AnalyticsReport: React.FC = () => {
             </span>
             <div className="flex items-center space-x-1 text-xs font-bold text-emerald-600">
               <ArrowUpRight className="w-4 h-4" />
-              <span>96.2% Fulfillment Rate</span>
+              <span>{fulfillmentRate}% Fulfillment Rate ({deliveredOrdersCount} Delivered)</span>
             </div>
           </div>
         </div>
