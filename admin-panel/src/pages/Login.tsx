@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
-import { Mail, Lock, ArrowRight, Shield, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Shield, Eye, EyeOff } from 'lucide-react';
 import { apiService } from '../services/api';
 
 export const Login: React.FC = () => {
@@ -71,25 +71,6 @@ export const Login: React.FC = () => {
     } catch (err: any) {
       console.error('Admin login error:', err);
       setError(err.response?.data?.message || 'Login failed. Please verify your credentials.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDemoLogin = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const userData = await apiService.login({
-        email: 'admin@snakeexchange.com',
-        password: 'admin123',
-      });
-      localStorage.setItem('admin_user', JSON.stringify(userData));
-      localStorage.setItem('admin_token', 'mock-admin-token-' + userData.id);
-      navigate('/');
-    } catch (err: any) {
-      console.error('Demo admin login error:', err);
-      setError('Failed to log in with demo account. Ensure backend is running.');
     } finally {
       setLoading(false);
     }
@@ -193,25 +174,6 @@ export const Login: React.FC = () => {
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        {/* Demo Section */}
-        <div className="space-y-3 pt-2">
-          <div className="flex items-center gap-3 text-xs text-slate-500 font-semibold">
-            <div className="flex-1 h-px bg-slate-800" />
-            <span>DEVELOPER QUICK SIGN-IN</span>
-            <div className="flex-1 h-px bg-slate-800" />
-          </div>
-
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            disabled={loading}
-            className="w-full py-3 bg-slate-950 hover:bg-slate-850 text-slate-300 hover:text-white rounded-xl font-bold text-xs border border-slate-800 hover:border-indigo-500/40 cursor-pointer transition-all flex items-center justify-center space-x-2"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Instant Login (admin@snakeexchange.com)</span>
-          </button>
-        </div>
       </div>
     </div>
   );

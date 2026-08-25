@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { useAuthStore } from '../store/authStore';
 import { apiService } from '../services/api';
-import { Mail, Lock, User, Phone, ArrowRight, ArrowLeft, Sparkles, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Phone, ArrowRight, ArrowLeft, Sparkles, Eye, EyeOff } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -92,25 +92,6 @@ export const Login: React.FC = () => {
     } catch (err: any) {
       console.error('Google login error:', err);
       setError(err.response?.data?.message || 'Google sign-in failed.');
-      setLoading(false);
-    }
-  };
-
-  // Quick Demo Login Handler
-  const handleDemoLogin = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const userData = await apiService.login({
-        email: 'customer@example.com',
-        password: 'customer123'
-      });
-      login(userData);
-      setLoading(false);
-      navigate(redirect);
-    } catch (err: any) {
-      console.error('Demo auth error:', err);
-      setError(err.response?.data?.message || 'Demo authentication failed.');
       setLoading(false);
     }
   };
@@ -288,24 +269,6 @@ export const Login: React.FC = () => {
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
-
-        {/* Divider */}
-        <div className="flex items-center gap-3 text-xs text-slate-400 font-semibold">
-          <div className="flex-1 h-px bg-slate-100" />
-          <span>QUICK TESTING</span>
-          <div className="flex-1 h-px bg-slate-100" />
-        </div>
-
-        {/* Demo 1-Click Login Button */}
-        <button
-          type="button"
-          onClick={handleDemoLogin}
-          disabled={loading}
-          className="w-full py-3 border-2 border-slate-200 hover:border-primary/40 bg-slate-50 hover:bg-primary/5 rounded-2xl font-extrabold text-xs text-slate-700 hover:text-primary transition-all cursor-pointer flex items-center justify-center space-x-2"
-        >
-          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-          <span>Instant Demo Login (Alex Johnson)</span>
-        </button>
 
         {/* Footer info */}
         <p className="text-[11px] text-center text-slate-400 font-medium leading-relaxed">
