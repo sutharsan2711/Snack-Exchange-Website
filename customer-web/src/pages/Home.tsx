@@ -7,7 +7,16 @@ import type { FoodItem } from '../types/food';
 import { FoodCard } from '../components/FoodCard';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useCartStore } from '../store/cartStore';
-import { Star, Clock, MapPin, Flame, ShieldCheck, Sparkles, TrendingUp, Search, Info, ShoppingCart, Minus, Plus, Trash2, ArrowRight } from 'lucide-react';
+import { Star, Clock, MapPin, Flame, ShieldCheck, Sparkles, TrendingUp, Search, Info, ShoppingCart, Minus, Plus, Trash2, ArrowRight, Shuffle } from 'lucide-react';
+
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
 
 export const Home: React.FC = () => {
   const { items, subtotal, deliveryFee, tax, total, increaseQuantity, decreaseQuantity, removeItem } = useCartStore();
@@ -53,9 +62,9 @@ export const Home: React.FC = () => {
           const singleRest = rests[0];
           setRestaurant(singleRest);
           
-          // Get all menu items for this restaurant
+          // Get all menu items for this restaurant and shuffle them
           const foodItems = await apiService.getFoodsByRestaurantId(singleRest.id);
-          setFoods(foodItems);
+          setFoods(shuffleArray(foodItems));
         }
       } catch (error) {
         console.error('Failed to load restaurant details:', error);
@@ -103,6 +112,10 @@ export const Home: React.FC = () => {
                         (foodType === 'non-veg' && !food.isVeg);
     return matchesCategory && matchesSearch && matchesType;
   });
+
+  const handleShuffle = () => {
+    setFoods((prev) => shuffleArray(prev));
+  };
 
   const showBanner = restaurant.showBanner !== false;
 
@@ -298,10 +311,21 @@ export const Home: React.FC = () => {
           {/* ── CENTER: Recommendations / Food Grid ── */}
           <div className="lg:col-span-7 space-y-5">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-800">
-                {selectedCategory === 'All' ? 'Our Recommendation' : selectedCategory}
-              </h3>
-              <span className="text-xs text-slate-400 font-bold">{displayedFoods.length} items available</span>
+              <div>
+                <h3 className="text-lg font-bold text-slate-800">
+                  {selectedCategory === 'All' ? 'Our Recommendation' : selectedCategory}
+                </h3>
+                <span className="text-xs text-slate-400 font-bold">{displayedFoods.length} items available</span>
+              </div>
+
+              <button
+                onClick={handleShuffle}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 hover:text-primary border border-slate-200 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
+                title="Shuffle menu items"
+              >
+                <Shuffle className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary group-hover:rotate-180 transition-transform duration-300" />
+                <span>Shuffle Menu</span>
+              </button>
             </div>
 
             {displayedFoods.length === 0 ? (
@@ -316,6 +340,7 @@ export const Home: React.FC = () => {
                     food={food}
                     restaurantId={restaurant.id}
                     restaurantName={restaurant.name}
+                    isOpen={restaurant.isOpen !== false}
                     onConflict={() => {}}
                   />
                 ))}

@@ -8,6 +8,7 @@ interface FoodCardProps {
   food: FoodItem;
   restaurantId: string;
   restaurantName: string;
+  isOpen?: boolean;
   onConflict: (food: FoodItem) => void;
 }
 
@@ -17,6 +18,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   food,
   restaurantId,
   restaurantName,
+  isOpen = true,
   onConflict,
 }) => {
   const { items, addItem, increaseQuantity, decreaseQuantity } = useCartStore();
@@ -73,11 +75,15 @@ export const FoodCard: React.FC<FoodCardProps> = ({
       </div>
 
       {/* Image and Add Button container */}
-      <div className="relative flex-shrink-0 w-28 h-28 md:w-32 md:h-32 bg-slate-50 rounded-xl overflow-hidden shadow-inner flex flex-col items-center">
+      <div className="relative flex-shrink-0 w-28 h-28 md:w-32 md:h-32 bg-slate-50 rounded-xl overflow-hidden shadow-inner flex flex-col items-center group">
         <img
           src={food.image || DEFAULT_FOOD_IMAGE}
           alt={food.name}
-          className="w-full h-full object-cover"
+          className={`w-full h-full object-cover transition-all duration-300 ${
+            !isOpen
+              ? 'grayscale contrast-90 opacity-70'
+              : 'group-hover:scale-105'
+          }`}
           loading="lazy"
           onError={(e) => {
             const target = e.currentTarget;
@@ -87,9 +93,26 @@ export const FoodCard: React.FC<FoodCardProps> = ({
           }}
         />
 
+        {/* Closed Store Shadow Overlay & Tag */}
+        {!isOpen && (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/20 pointer-events-none rounded-xl" />
+            <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-rose-600/90 backdrop-blur-xs text-white text-[9px] font-black uppercase tracking-wider rounded-md shadow-sm">
+              Closed
+            </div>
+          </>
+        )}
+
         {/* Add/Quantity selector button overlay */}
         <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-4/5">
-          {quantity > 0 ? (
+          {!isOpen ? (
+            <button
+              disabled
+              className="w-full py-1.5 bg-slate-200/90 text-slate-500 border border-slate-300/80 rounded-lg font-bold text-xs cursor-not-allowed text-center backdrop-blur-xs shadow-xs"
+            >
+              CLOSED
+            </button>
+          ) : quantity > 0 ? (
             <div className="flex items-center justify-between bg-white text-primary border border-primary/20 shadow-lg rounded-lg font-bold text-sm h-8">
               <button
                 onClick={() => decreaseQuantity(food.id)}
