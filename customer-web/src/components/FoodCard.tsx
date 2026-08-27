@@ -11,6 +11,8 @@ interface FoodCardProps {
   onConflict: (food: FoodItem) => void;
 }
 
+const DEFAULT_FOOD_IMAGE = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80';
+
 export const FoodCard: React.FC<FoodCardProps> = ({
   food,
   restaurantId,
@@ -53,11 +55,9 @@ export const FoodCard: React.FC<FoodCardProps> = ({
         </div>
 
         {/* Name */}
-        <h4 className="text-base md:text-lg font-bold text-slate-800 mt-2 line-clamp-1">
+        <h4 className="text-base md:text-lg font-bold text-slate-800 mt-2 leading-snug break-words">
           {food.name}
         </h4>
-
-
 
         {/* Price */}
         <div className="text-base font-extrabold text-slate-800 mt-1">
@@ -65,18 +65,26 @@ export const FoodCard: React.FC<FoodCardProps> = ({
         </div>
 
         {/* Description */}
-        <p className="text-xs md:text-sm text-slate-500 mt-2 line-clamp-2 md:line-clamp-3">
-          {food.description}
-        </p>
+        {food.description ? (
+          <p className="text-xs md:text-sm text-slate-500 mt-2 line-clamp-2 md:line-clamp-3">
+            {food.description}
+          </p>
+        ) : null}
       </div>
 
       {/* Image and Add Button container */}
       <div className="relative flex-shrink-0 w-28 h-28 md:w-32 md:h-32 bg-slate-50 rounded-xl overflow-hidden shadow-inner flex flex-col items-center">
         <img
-          src={food.image}
+          src={food.image || DEFAULT_FOOD_IMAGE}
           alt={food.name}
           className="w-full h-full object-cover"
           loading="lazy"
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (target.src !== DEFAULT_FOOD_IMAGE) {
+              target.src = DEFAULT_FOOD_IMAGE;
+            }
+          }}
         />
 
         {/* Add/Quantity selector button overlay */}

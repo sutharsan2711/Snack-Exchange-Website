@@ -356,7 +356,7 @@ export const Home: React.FC = () => {
                       <div key={item.food.id} className="flex items-center gap-3 px-4 py-3">
                         <img src={item.food.image} alt={item.food.name} className="w-11 h-11 rounded-lg object-cover bg-slate-50 flex-shrink-0" />
                         <div className="flex-grow min-w-0">
-                          <p className="text-xs font-bold text-slate-800 truncate">{item.food.name}</p>
+                          <p className="text-xs font-bold text-slate-800 break-words leading-tight">{item.food.name}</p>
                           <p className="text-xs text-slate-400 font-semibold">₹{item.food.price}</p>
                         </div>
                         <div className="flex items-center bg-slate-50 border border-slate-200/60 rounded-lg text-xs font-bold h-7 flex-shrink-0">

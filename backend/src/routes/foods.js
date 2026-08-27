@@ -3,6 +3,11 @@ import { pool } from '../db.js';
 
 const router = Router();
 
+function cleanImageUrl(url) {
+  if (!url) return '';
+  return String(url).replace(/,e_grayscale/g, '').replace(/e_grayscale,/g, '').replace(/e_grayscale/g, '');
+}
+
 function formatFood(row) {
   return {
     id: row.id,
@@ -10,7 +15,7 @@ function formatFood(row) {
     name: row.name,
     description: row.description || '',
     price: Number(row.price),
-    image: row.image || '',
+    image: cleanImageUrl(row.image),
     rating: Number(row.rating || 5.0),
     category: row.category || '',
     isVeg: Boolean(row.is_veg),

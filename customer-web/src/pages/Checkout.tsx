@@ -485,7 +485,7 @@ export const Checkout: React.FC = () => {
                 {items.map((item) => (
                   <div key={item.food.id} className="flex justify-between items-center text-sm pt-2">
                     <div className="min-w-0 pr-3">
-                      <span className="font-bold text-slate-800 line-clamp-1">{item.food.name}</span>
+                      <span className="font-bold text-slate-800 block break-words">{item.food.name}</span>
                       <span className="text-[11px] text-slate-400 font-bold">Qty: {item.quantity}</span>
                     </div>
                     <span className="font-extrabold text-slate-700">

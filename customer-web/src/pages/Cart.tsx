@@ -86,7 +86,7 @@ export const Cart: React.FC = () => {
                       className="w-14 h-14 rounded-lg object-cover bg-slate-50 flex-shrink-0"
                     />
                     <div className="min-w-0">
-                      <h4 className="text-sm font-bold text-slate-800 truncate">{item.food.name}</h4>
+                      <h4 className="text-sm font-bold text-slate-800 break-words leading-tight">{item.food.name}</h4>
                       <p className="text-xs text-slate-400 font-semibold">₹{item.food.price} each</p>
                     </div>
                   </div>

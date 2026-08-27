@@ -984,20 +984,6 @@ export const MenuManager: React.FC = () => {
                 />
               </div>
 
-              {/* Description */}
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                  Description
-                </label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                  placeholder="Describe the dish — ingredients, preparation, taste..."
-                  rows={3}
-                  className="w-full px-4 py-2 border border-slate-200 focus:bg-white rounded-xl text-sm font-semibold outline-hidden focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-colors resize-none"
-                />
-              </div>
-
               {/* Category + Price */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
