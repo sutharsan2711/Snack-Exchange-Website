@@ -5,9 +5,10 @@ import type { Category } from '../services/api';
 import type { Restaurant } from '../types/restaurant';
 import type { FoodItem } from '../types/food';
 import { FoodCard } from '../components/FoodCard';
+import { ImageLightboxModal } from '../components/ImageLightboxModal';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { useCartStore } from '../store/cartStore';
-import { Star, Clock, MapPin, Flame, ShieldCheck, Sparkles, TrendingUp, Search, Info, ShoppingCart, Minus, Plus, Trash2, ArrowRight, Shuffle } from 'lucide-react';
+import { Star, Clock, MapPin, Flame, ShieldCheck, Sparkles, TrendingUp, Search, Info, ShoppingCart, Minus, Plus, Trash2, ArrowRight } from 'lucide-react';
 
 const shuffleArray = <T,>(array: T[]): T[] => {
   const shuffled = [...array];
@@ -24,6 +25,7 @@ export const Home: React.FC = () => {
   const [foods, setFoods] = useState<FoodItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   
   const [searchParams, setSearchParams] = useSearchParams();
   const searchParam = searchParams.get('search') || '';
@@ -106,16 +108,12 @@ export const Home: React.FC = () => {
       : foodCat === selectedCategory.trim().toLowerCase();
 
     const matchesSearch = food.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          food.description.toLowerCase().includes(searchQuery.toLowerCase());
+                          (food.category || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = foodType === 'all' || 
                         (foodType === 'veg' && food.isVeg) || 
                         (foodType === 'non-veg' && !food.isVeg);
     return matchesCategory && matchesSearch && matchesType;
   });
-
-  const handleShuffle = () => {
-    setFoods((prev) => shuffleArray(prev));
-  };
 
   const showBanner = restaurant.showBanner !== false;
 
@@ -293,15 +291,12 @@ export const Home: React.FC = () => {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.name)}
-                  className={`px-3 py-2 flex items-center space-x-2 text-left text-sm font-bold rounded-xl whitespace-nowrap transition-all duration-200 cursor-pointer w-full ${
+                  className={`px-3 py-2 flex items-center text-left text-sm font-bold rounded-xl whitespace-nowrap transition-all duration-200 cursor-pointer w-full ${
                     selectedCategory === cat.name
                       ? 'bg-primary text-white shadow-sm shadow-primary/20 scale-102'
                       : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                   }`}
                 >
-                  {cat.id !== 'all' && cat.image && (
-                    <img src={cat.image} alt={cat.name} className="w-5 h-5 rounded-full object-cover border border-slate-100/50 flex-shrink-0" />
-                  )}
                   <span>{cat.name}</span>
                 </button>
               ))}
@@ -317,15 +312,6 @@ export const Home: React.FC = () => {
                 </h3>
                 <span className="text-xs text-slate-400 font-bold">{displayedFoods.length} items available</span>
               </div>
-
-              <button
-                onClick={handleShuffle}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 hover:text-primary border border-slate-200 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
-                title="Shuffle menu items"
-              >
-                <Shuffle className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary group-hover:rotate-180 transition-transform duration-300" />
-                <span>Shuffle Menu</span>
-              </button>
             </div>
 
             {displayedFoods.length === 0 ? (
@@ -334,13 +320,14 @@ export const Home: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-                {displayedFoods.map((food) => (
+                {displayedFoods.map((food, idx) => (
                   <FoodCard
                     key={food.id}
                     food={food}
                     restaurantId={restaurant.id}
                     restaurantName={restaurant.name}
                     isOpen={restaurant.isOpen !== false}
+                    onImageClick={() => setPreviewIndex(idx)}
                     onConflict={() => {}}
                   />
                 ))}
@@ -448,6 +435,18 @@ export const Home: React.FC = () => {
 
         </div>
       </section>
+
+      {/* Image Lightbox Modal with Next / Previous Controls */}
+      <ImageLightboxModal
+        foods={displayedFoods}
+        currentIndex={previewIndex ?? 0}
+        isOpen={previewIndex !== null}
+        isStoreOpen={restaurant.isOpen !== false}
+        restaurantId={restaurant.id}
+        restaurantName={restaurant.name}
+        onClose={() => setPreviewIndex(null)}
+        onIndexChange={(newIndex) => setPreviewIndex(newIndex)}
+      />
 
     </div>
   );

@@ -9,7 +9,6 @@ import {
 
 const EMPTY_FORM = {
   name: '',
-  description: '',
   price: '',
   image: '',
   rating: '4.5',
@@ -212,7 +211,6 @@ export const MenuManager: React.FC = () => {
     const q = searchQuery.toLowerCase();
     const matchesQ =
       f.name.toLowerCase().includes(q) ||
-      f.description.toLowerCase().includes(q) ||
       f.category.toLowerCase().includes(q);
     const matchesType =
       foodType === 'all' ||
@@ -236,7 +234,6 @@ export const MenuManager: React.FC = () => {
     setReturnToCatModal(returnCat || null);
     setForm({
       name: food.name,
-      description: food.description,
       price: String(food.price),
       image: food.image,
       rating: String(food.rating),
@@ -289,7 +286,6 @@ export const MenuManager: React.FC = () => {
       setSaving(true);
       const payload = {
         name: form.name.trim(),
-        description: form.description.trim(),
         price: parseFloat(form.price) || 0,
         image: form.image.trim(),
         rating: parseFloat(form.rating) || 4.5,
@@ -371,7 +367,7 @@ export const MenuManager: React.FC = () => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by name, description, category..."
+                placeholder="Search by name, category..."
                 className="w-full pl-9 pr-4 py-2 border border-slate-200 bg-slate-50/50 hover:bg-slate-50 focus:bg-white rounded-xl text-sm font-semibold outline-hidden focus:border-indigo-600 transition-colors"
               />
             </div>
@@ -624,9 +620,6 @@ export const MenuManager: React.FC = () => {
                         />
                         <div>
                           <p className="font-extrabold text-slate-800 leading-tight">{food.name}</p>
-                          <p className="text-xs text-slate-400 font-medium line-clamp-1 max-w-xs mt-0.5">
-                            {food.description}
-                          </p>
                         </div>
                       </div>
                     </td>
@@ -875,7 +868,7 @@ export const MenuManager: React.FC = () => {
                                       <button
                                         onClick={() => {
                                           alert(
-                                            `Dish Preview:\n-----------------\nName: ${food.name}\nDescription: ${food.description || 'No description'}\nCategory: ${food.category}\nPrice: ₹${food.price}\nType: ${food.isVeg ? 'Vegetarian' : 'Non-Vegetarian'}\nStock: ${isDisabled ? 'Out of Stock' : 'In Stock'}`
+                                            `Dish Preview:\n-----------------\nName: ${food.name}\nCategory: ${food.category}\nPrice: ₹${food.price}\nType: ${food.isVeg ? 'Vegetarian' : 'Non-Vegetarian'}\nStock: ${isDisabled ? 'Out of Stock' : 'In Stock'}`
                                           );
                                         }}
                                         className="hover:text-slate-650 underline cursor-pointer"

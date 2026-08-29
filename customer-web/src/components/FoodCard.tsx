@@ -1,14 +1,14 @@
 import React from 'react';
-import { Plus, Minus } from 'lucide-react';
+import { Plus, Minus, ZoomIn } from 'lucide-react';
 import type { FoodItem } from '../types/food';
 import { useCartStore } from '../store/cartStore';
-
 
 interface FoodCardProps {
   food: FoodItem;
   restaurantId: string;
   restaurantName: string;
   isOpen?: boolean;
+  onImageClick?: () => void;
   onConflict: (food: FoodItem) => void;
 }
 
@@ -19,6 +19,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
   restaurantId,
   restaurantName,
   isOpen = true,
+  onImageClick,
   onConflict,
 }) => {
   const { items, addItem, increaseQuantity, decreaseQuantity } = useCartStore();
@@ -65,46 +66,54 @@ export const FoodCard: React.FC<FoodCardProps> = ({
         <div className="text-base font-extrabold text-slate-800 mt-1">
           ₹{food.price}
         </div>
-
-        {/* Description */}
-        {food.description ? (
-          <p className="text-xs md:text-sm text-slate-500 mt-2 line-clamp-2 md:line-clamp-3">
-            {food.description}
-          </p>
-        ) : null}
       </div>
 
       {/* Image and Add Button container */}
       <div className="relative flex-shrink-0 w-28 h-28 md:w-32 md:h-32 bg-slate-50 rounded-xl overflow-hidden shadow-inner flex flex-col items-center group">
-        <img
-          src={food.image || DEFAULT_FOOD_IMAGE}
-          alt={food.name}
-          className={`w-full h-full object-cover transition-all duration-300 ${
-            !isOpen
-              ? 'grayscale contrast-90 opacity-70'
-              : 'group-hover:scale-105'
-          }`}
-          loading="lazy"
-          onError={(e) => {
-            const target = e.currentTarget;
-            if (target.src !== DEFAULT_FOOD_IMAGE) {
-              target.src = DEFAULT_FOOD_IMAGE;
-            }
-          }}
-        />
+        <button
+          type="button"
+          onClick={onImageClick}
+          className="w-full h-full cursor-zoom-in relative block text-left"
+          title={`Click to view full image of ${food.name}`}
+          aria-label={`View full image for ${food.name}`}
+        >
+          <img
+            src={food.image || DEFAULT_FOOD_IMAGE}
+            alt={food.name}
+            className={`w-full h-full object-cover transition-all duration-300 ${
+              !isOpen
+                ? 'grayscale contrast-90 opacity-70'
+                : 'group-hover:scale-105'
+            }`}
+            loading="lazy"
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (target.src !== DEFAULT_FOOD_IMAGE) {
+                target.src = DEFAULT_FOOD_IMAGE;
+              }
+            }}
+          />
+
+          {/* Hover zoom indicator hint */}
+          <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
+            <div className="p-1.5 bg-black/60 rounded-full text-white backdrop-blur-xs shadow-md transform scale-90 group-hover:scale-100 transition-transform">
+              <ZoomIn className="w-4 h-4" />
+            </div>
+          </div>
+        </button>
 
         {/* Closed Store Shadow Overlay & Tag */}
         {!isOpen && (
           <>
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-black/20 pointer-events-none rounded-xl" />
-            <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-rose-600/90 backdrop-blur-xs text-white text-[9px] font-black uppercase tracking-wider rounded-md shadow-sm">
+            <div className="absolute top-1.5 right-1.5 px-1.5 py-0.5 bg-rose-600/90 backdrop-blur-xs text-white text-[9px] font-black uppercase tracking-wider rounded-md shadow-sm pointer-events-none">
               Closed
             </div>
           </>
         )}
 
         {/* Add/Quantity selector button overlay */}
-        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-4/5">
+        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-4/5 z-10">
           {!isOpen ? (
             <button
               disabled

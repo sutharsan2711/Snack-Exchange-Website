@@ -12,5 +12,6 @@ export const categories: Category[] = [
   { id: 'south-indian', name: 'South Indian', icon: '🫓' },
   { id: 'north-indian', name: 'North Indian', icon: '🍲' },
   { id: 'desserts', name: 'Desserts', icon: '🍰' },
-  { id: 'drinks', name: 'Drinks', icon: '🥤' }
+  { id: 'drinks', name: 'Drinks', icon: '🥤' },
+  { id: 'veg-crunch', name: 'Veg Crunch', icon: '🍟' }
 ];

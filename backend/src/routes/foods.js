@@ -13,7 +13,6 @@ function formatFood(row) {
     id: row.id,
     restaurantId: row.restaurant_id,
     name: row.name,
-    description: row.description || '',
     price: Number(row.price),
     image: cleanImageUrl(row.image),
     rating: Number(row.rating || 5.0),
@@ -36,16 +35,16 @@ router.get('/', async (req, res) => {
 // POST /foods
 router.post('/', async (req, res) => {
   try {
-    const { name, description, price, image, rating = 5.0, category, isVeg = true, restaurantId = 'gourmet-bistro' } = req.body;
+    const { name, price, image, rating = 5.0, category, isVeg = true, restaurantId = 'gourmet-bistro' } = req.body;
     if (!name || price === undefined) {
       return res.status(400).json({ message: 'Name and price are required.' });
     }
 
     const id = `f-${Date.now()}`;
     await pool.query(
-      `INSERT INTO food_items (id, restaurant_id, name, description, price, image, rating, category, is_veg)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, restaurantId, name, description || '', Number(price), image || '', Number(rating), category || '', isVeg ? 1 : 0]
+      `INSERT INTO food_items (id, restaurant_id, name, price, image, rating, category, is_veg)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, restaurantId, name, Number(price), image || '', Number(rating), category || '', isVeg ? 1 : 0]
     );
 
     const [rows] = await pool.query('SELECT * FROM food_items WHERE id = ?', [id]);
@@ -60,7 +59,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, price, image, rating, category, isVeg } = req.body;
+    const { name, price, image, rating, category, isVeg } = req.body;
 
     const [existing] = await pool.query('SELECT * FROM food_items WHERE id = ?', [id]);
     if (existing.length === 0) {
@@ -69,7 +68,6 @@ router.put('/:id', async (req, res) => {
 
     const current = existing[0];
     const updatedName = name !== undefined ? name : current.name;
-    const updatedDesc = description !== undefined ? description : current.description;
     const updatedPrice = price !== undefined ? Number(price) : current.price;
     const updatedImage = image !== undefined ? image : current.image;
     const updatedRating = rating !== undefined ? Number(rating) : current.rating;
@@ -78,9 +76,9 @@ router.put('/:id', async (req, res) => {
 
     await pool.query(
       `UPDATE food_items 
-       SET name = ?, description = ?, price = ?, image = ?, rating = ?, category = ?, is_veg = ?
+       SET name = ?, price = ?, image = ?, rating = ?, category = ?, is_veg = ?
        WHERE id = ?`,
-      [updatedName, updatedDesc, updatedPrice, updatedImage, updatedRating, updatedCategory, updatedIsVeg, id]
+      [updatedName, updatedPrice, updatedImage, updatedRating, updatedCategory, updatedIsVeg, id]
     );
 
     const [rows] = await pool.query('SELECT * FROM food_items WHERE id = ?', [id]);
