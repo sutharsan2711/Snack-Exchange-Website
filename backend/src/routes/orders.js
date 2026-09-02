@@ -7,7 +7,7 @@ async function getFullOrder(orderRow) {
   const [items] = await pool.query(
     `SELECT oi.id, oi.quantity, oi.price,
             fi.id as food_id, fi.restaurant_id, fi.name as food_name,
-            fi.description as food_desc, fi.price as food_price,
+            fi.price as food_price,
             fi.image as food_image, fi.rating as food_rating,
             fi.category as food_cat, fi.is_veg
      FROM order_items oi
@@ -23,8 +23,8 @@ async function getFullOrder(orderRow) {
     foodItem: {
       id: item.food_id,
       restaurantId: item.restaurant_id,
-      name: item.food_name,
-      description: item.food_desc || '',
+      name: item.food_name || 'Food Item',
+      description: '',
       price: Number(item.food_price || item.price),
       image: item.food_image || '',
       rating: Number(item.food_rating || 5.0),
@@ -94,12 +94,21 @@ router.post('/', async (req, res) => {
     );
 
     for (const item of items) {
-      // Find unit price from food_items table
-      const [foodRows] = await connection.query('SELECT price FROM food_items WHERE id = ?', [item.foodId]);
-      const price = foodRows.length > 0 ? Number(foodRows[0].price) : 0;
+      let foodId = item.foodId;
+      const [foodRows] = await connection.query('SELECT price FROM food_items WHERE id = ?', [foodId]);
+      let price = foodRows.length > 0 ? Number(foodRows[0].price) : (item.price ? Number(item.price) : 0);
+
+      if (foodRows.length === 0) {
+        const [anyFoods] = await connection.query('SELECT id, price FROM food_items LIMIT 1');
+        if (anyFoods.length > 0) {
+          foodId = anyFoods[0].id;
+          if (!price) price = Number(anyFoods[0].price);
+        }
+      }
+
       await connection.query(
         `INSERT INTO order_items (order_id, food_id, quantity, price) VALUES (?, ?, ?, ?)`,
-        [orderId, item.foodId, item.quantity, price]
+        [orderId, foodId, item.quantity, price]
       );
     }
 
@@ -108,7 +117,7 @@ router.post('/', async (req, res) => {
   } catch (err) {
     await connection.rollback();
     console.error('Place order error:', err);
-    res.status(500).json({ message: 'Error placing order.' });
+    res.status(500).json({ message: 'Error placing order.', error: err.message });
   } finally {
     connection.release();
   }

@@ -6,17 +6,26 @@ import os from 'os';
 import dotenv from 'dotenv';
 import { initDB } from './db.js';
 
+dotenv.config();
+
+// Prevent crashes on unhandled connection drops or timeouts
+process.on('uncaughtException', (err) => {
+  console.error('⚠️ Uncaught Exception caught (prevented crash):', err.message);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('⚠️ Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+const app = express();
+const PORT = process.env.PORT || 8085;
+
 import authRouter from './routes/auth.js';
 import categoriesRouter from './routes/categories.js';
 import foodsRouter from './routes/foods.js';
 import restaurantsRouter from './routes/restaurants.js';
 import ordersRouter from './routes/orders.js';
 import uploadRouter from './routes/upload.js';
-
-dotenv.config();
-
-const app = express();
-const PORT = process.env.PORT || 8085;
 
 // Middleware
 app.use(cors({
@@ -38,6 +47,18 @@ try {
 }
 app.use('/uploads', express.static(uploadDir));
 app.use('/api/uploads', express.static(uploadDir));
+
+// Ensure DB tables are initialized in Vercel Serverless environment
+let dbInitPromise = null;
+app.use(async (req, res, next) => {
+  if (process.env.VERCEL && !dbInitPromise) {
+    dbInitPromise = initDB().catch((err) => {
+      console.error('Serverless DB initialization failed:', err.message);
+      dbInitPromise = null;
+    });
+  }
+  next();
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

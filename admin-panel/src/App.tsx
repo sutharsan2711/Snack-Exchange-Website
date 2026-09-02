@@ -5,6 +5,7 @@ import { Dashboard } from './pages/Dashboard';
 import { AnalyticsReport } from './pages/AnalyticsReport';
 import { MenuManager } from './pages/MenuManager';
 import { OrderManager } from './pages/OrderManager';
+import { PosOrderManager } from './pages/PosOrderManager';
 import { StoreSettings } from './pages/StoreSettings';
 import { FooterManager } from './pages/FooterManager';
 import { AccountManager } from './pages/AccountManager';
@@ -31,6 +32,7 @@ function App() {
                 <Route path="/categories" element={<Navigate to="/menu" replace />} />
                 <Route path="/menu" element={<MenuManager />} />
                 <Route path="/orders" element={<OrderManager />} />
+                <Route path="/pos-orders" element={<PosOrderManager />} />
                 <Route path="/users" element={<AccountManager />} />
                 <Route path="/settings" element={<StoreSettings />} />
                 <Route path="/footer" element={<FooterManager />} />

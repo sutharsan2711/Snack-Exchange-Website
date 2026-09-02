@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Utensils, ShoppingCart, LogOut,
-  Settings, ChefHat, Layout, Clock, BarChart3, Users
+  Settings, ChefHat, Layout, Clock, BarChart3, Users, Store
 } from 'lucide-react';
 import { apiService } from '../services/api';
 
@@ -83,7 +83,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { name: 'Dashboard', href: '/', icon: LayoutDashboard },
     { name: 'Analytics & Reports', href: '/analytics', icon: BarChart3 },
     { name: 'Menu & Categories', href: '/menu', icon: ChefHat },
-    { name: 'Order Management', href: '/orders', icon: ShoppingCart },
+    { name: 'Online Orders', href: '/orders', icon: ShoppingCart },
+    { name: 'POS Counter Orders', href: '/pos-orders', icon: Store },
     { name: 'Staff & User Control', href: '/users', icon: Users },
     { name: 'Store Customization', href: '/settings', icon: Settings },
     { name: 'Customer Footer Customizer', href: '/footer', icon: Layout },
